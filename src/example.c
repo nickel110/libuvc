@@ -8,6 +8,8 @@ void cb(uvc_frame_t *frame, void *ptr) {
   uvc_frame_t *bgr;
   uvc_error_t ret;
 
+  write(1, frame->data, frame->data_bytes);
+  return;
   /* We'll convert the image from YUV/JPEG to BGR, so allocate space */
   bgr = uvc_allocate_frame(frame->width * frame->height * 3);
   if (!bgr) {
@@ -77,7 +79,8 @@ int main(int argc, char **argv) {
   /* Locates the first attached UVC device, stores in dev */
   res = uvc_find_device(
       ctx, &dev,
-      0, 0, NULL); /* filter devices: vendor_id, product_id, "serial_num" */
+	  0x05ca, 0, NULL);
+//      0, 0, NULL); /* filter devices: vendor_id, product_id, "serial_num" */
 
   if (res < 0) {
     uvc_perror(res, "uvc_find_device"); /* no devices found */
@@ -99,8 +102,10 @@ int main(int argc, char **argv) {
       /* Try to negotiate a 640x480 30 fps YUYV stream profile */
       res = uvc_get_stream_ctrl_format_size(
           devh, &ctrl, /* result stored in ctrl */
-          UVC_FRAME_FORMAT_YUYV, /* YUV 422, aka YUV 4:2:2. try _COMPRESSED */
-          640, 480, 30 /* width, height, fps */
+//          UVC_FRAME_FORMAT_YUYV, /* YUV 422, aka YUV 4:2:2. try _COMPRESSED */
+//          640, 480, 30 /* width, height, fps */
+		  UVC_FRAME_FORMAT_H264,
+		  3840, 1920, 29
       );
 
       /* Print out the result */
@@ -119,9 +124,9 @@ int main(int argc, char **argv) {
         } else {
           puts("Streaming...");
 
-          uvc_set_ae_mode(devh, 1); /* e.g., turn on auto exposure */
+//          uvc_set_ae_mode(devh, 1); /* e.g., turn on auto exposure */
 
-          sleep(10); /* stream for 10 seconds */
+          sleep(30); /* stream for 10 seconds */
 
           /* End the stream. Blocks until last callback is serviced */
           uvc_stop_streaming(devh);

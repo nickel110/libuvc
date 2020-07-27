@@ -180,6 +180,7 @@ void uvc_print_diag(uvc_device_handle_t *devh, FILE *stream) {
           case UVC_VS_FORMAT_UNCOMPRESSED:
           case UVC_VS_FORMAT_MJPEG:
           case UVC_VS_FORMAT_FRAME_BASED:
+          case UVC_VS_FORMAT_H264:
             fprintf(stream,
                 "\t\%s(%d)\n"
                 "\t\t  bits per pixel: %d\n"

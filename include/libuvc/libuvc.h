@@ -84,6 +84,8 @@ enum uvc_frame_format {
   UVC_FRAME_FORMAT_SBGGR8,
   /** YUV420: NV12 */
   UVC_FRAME_FORMAT_NV12,
+  /* H264 */
+  UVC_FRAME_FORMAT_H264,
   /** Number of formats understood */
   UVC_FRAME_FORMAT_COUNT,
 };
@@ -117,7 +119,9 @@ enum uvc_vs_desc_subtype {
   UVC_VS_COLORFORMAT = 0x0d,
   UVC_VS_FORMAT_FRAME_BASED = 0x10,
   UVC_VS_FRAME_FRAME_BASED = 0x11,
-  UVC_VS_FORMAT_STREAM_BASED = 0x12
+  UVC_VS_FORMAT_STREAM_BASED = 0x12,
+  UVC_VS_FORMAT_H264 = 0x13,
+  UVC_VS_FRAME_H264 = 0x14
 };
 
 struct uvc_format_desc;
