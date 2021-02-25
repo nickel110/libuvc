@@ -72,6 +72,7 @@ enum uvc_frame_format {
   UVC_FRAME_FORMAT_BGR,
   /** Motion-JPEG (or JPEG) encoded images */
   UVC_FRAME_FORMAT_MJPEG,
+  UVC_FRAME_FORMAT_H264,
   /** Greyscale images */
   UVC_FRAME_FORMAT_GRAY8,
   UVC_FRAME_FORMAT_GRAY16,
@@ -84,8 +85,6 @@ enum uvc_frame_format {
   UVC_FRAME_FORMAT_SBGGR8,
   /** YUV420: NV12 */
   UVC_FRAME_FORMAT_NV12,
-  /* H264 */
-  UVC_FRAME_FORMAT_H264,
   /** Number of formats understood */
   UVC_FRAME_FORMAT_COUNT,
 };
@@ -556,6 +555,13 @@ uvc_error_t uvc_find_devices(
     uvc_context_t *ctx,
     uvc_device_t ***devs,
     int vid, int pid, const char *sn);
+
+#if LIBUSB_API_VERSION >= 0x01000107
+uvc_error_t uvc_wrap(
+    int sys_dev,
+    uvc_context_t *context,
+    uvc_device_handle_t **devh);
+#endif
 
 uvc_error_t uvc_open(
     uvc_device_t *dev,

@@ -1,5 +1,6 @@
 #include "libuvc/libuvc.h"
 #include <stdio.h>
+#include <unistd.h>
 
 /* This callback function runs once per frame. Use it to perform any
  * quick processing you need, or have it put the frame into your application's
@@ -7,22 +8,49 @@
 void cb(uvc_frame_t *frame, void *ptr) {
   uvc_frame_t *bgr;
   uvc_error_t ret;
+  enum uvc_frame_format *frame_format = (enum uvc_frame_format *)ptr;
+  /* FILE *fp;
+   * static int jpeg_count = 0;
+   * static const char *H264_FILE = "iOSDevLog.h264";
+   * static const char *MJPEG_FILE = ".jpeg";
+   * char filename[16]; */
 
   write(1, frame->data, frame->data_bytes);
   return;
   /* We'll convert the image from YUV/JPEG to BGR, so allocate space */
   bgr = uvc_allocate_frame(frame->width * frame->height * 3);
   if (!bgr) {
-    printf("unable to allocate bgr frame!");
+    printf("unable to allocate bgr frame!\n");
     return;
   }
 
-  /* Do the BGR conversion */
-  ret = uvc_any2bgr(frame, bgr);
-  if (ret) {
-    uvc_perror(ret, "uvc_any2bgr");
-    uvc_free_frame(bgr);
-    return;
+  printf("callback! frame_format = %d, width = %d, height = %d, length = %lu, ptr = %d\n",
+    frame->frame_format, frame->width, frame->height, frame->data_bytes, (int) ptr);
+
+  switch (frame->frame_format) {
+  case UVC_FRAME_FORMAT_H264:
+    /* use `ffplay H264_FILE` to play */
+    /* fp = fopen(H264_FILE, "a");
+     * fwrite(frame->data, 1, frame->data_bytes, fp);
+     * fclose(fp); */
+    break;
+  case UVC_COLOR_FORMAT_MJPEG:
+    /* sprintf(filename, "%d%s", jpeg_count++, MJPEG_FILE);
+     * fp = fopen(filename, "w");
+     * fwrite(frame->data, 1, frame->data_bytes, fp);
+     * fclose(fp); */
+    break;
+  case UVC_COLOR_FORMAT_YUYV:
+    /* Do the BGR conversion */
+    ret = uvc_any2bgr(frame, bgr);
+    if (ret) {
+      uvc_perror(ret, "uvc_any2bgr");
+      uvc_free_frame(bgr);
+      return;
+    }
+    break;
+  default:
+    break;
   }
 
   /* Call a user function:
@@ -99,13 +127,38 @@ int main(int argc, char **argv) {
        * knows about the device */
       uvc_print_diag(devh, stderr);
 
-      /* Try to negotiate a 640x480 30 fps YUYV stream profile */
+      const uvc_format_desc_t *format_desc = uvc_get_format_descs(devh);
+      const uvc_frame_desc_t *frame_desc = format_desc->frame_descs;
+      enum uvc_frame_format frame_format;
+      int width = 640;
+      int height = 480;
+      int fps = 30;
+
+      switch (format_desc->bDescriptorSubtype) {
+      case UVC_VS_FORMAT_MJPEG:
+        frame_format = UVC_COLOR_FORMAT_MJPEG;
+        break;
+      case UVC_VS_FORMAT_FRAME_BASED:
+        frame_format = UVC_FRAME_FORMAT_H264;
+        break;
+      default:
+        frame_format = UVC_FRAME_FORMAT_YUYV;
+        break;
+      }
+
+      if (frame_desc) {
+        width = frame_desc->wWidth;
+        height = frame_desc->wHeight;
+        fps = 10000000 / frame_desc->dwDefaultFrameInterval;
+      }
+
+      printf("\nFirst format: (%4s) %dx%d %dfps\n", format_desc->fourccFormat, width, height, fps);
+
+      /* Try to negotiate first stream profile */
       res = uvc_get_stream_ctrl_format_size(
           devh, &ctrl, /* result stored in ctrl */
-//          UVC_FRAME_FORMAT_YUYV, /* YUV 422, aka YUV 4:2:2. try _COMPRESSED */
-//          640, 480, 30 /* width, height, fps */
-		  UVC_FRAME_FORMAT_H264,
-		  3840, 1920, 29
+          frame_format,
+          width, height, fps /* width, height, fps */
       );
 
       /* Print out the result */
@@ -115,9 +168,9 @@ int main(int argc, char **argv) {
         uvc_perror(res, "get_mode"); /* device doesn't provide a matching stream */
       } else {
         /* Start the video stream. The library will call user function cb:
-         *   cb(frame, (void*) 12345)
+         *   cb(frame, (void *) 12345)
          */
-        res = uvc_start_streaming(devh, &ctrl, cb, 12345, 0);
+        res = uvc_start_streaming(devh, &ctrl, cb, (void *) 12345, 0);
 
         if (res < 0) {
           uvc_perror(res, "start_streaming"); /* unable to start stream */
