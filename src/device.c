@@ -435,8 +435,7 @@ uvc_error_t uvc_get_device_info(uvc_device_t *dev,
     return UVC_ERROR_NO_MEM;
   }
 
-  if (libusb_get_config_descriptor(dev->usb_dev,
-				   0,
+  if (libusb_get_active_config_descriptor(dev->usb_dev,
 				   &(internal_info->config)) != 0) {
     free(internal_info);
     UVC_EXIT(UVC_ERROR_IO);
@@ -671,7 +670,7 @@ uvc_error_t uvc_get_device_list(
   while ((usb_dev = usb_dev_list[++dev_idx]) != NULL) {
     got_interface = 0;
 
-    if (libusb_get_config_descriptor(usb_dev, 0, &config) != 0)
+    if (libusb_get_active_config_descriptor(usb_dev, &config) != 0)
       continue;
 
     if ( libusb_get_device_descriptor ( usb_dev, &desc ) != LIBUSB_SUCCESS )
@@ -1419,7 +1418,7 @@ uvc_error_t uvc_parse_vs_format_mjpeg(uvc_streaming_interface_t *stream_if,
 uvc_error_t uvc_parse_vs_format_h264(uvc_streaming_interface_t *stream_if,
 					     const unsigned char *block,
 					     size_t block_size) {
-  static char h264guid[]={'H',  '2',  '6',  '4', 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}
+  static char h264guid[]={'H',  '2',  '6',  '4', 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71};
   UVC_ENTER();
 
   uvc_format_desc_t *format = calloc(1, sizeof(*format));
