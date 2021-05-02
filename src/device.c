@@ -390,6 +390,7 @@ static uvc_error_t uvc_open_internal(
 
   if (dev->ctx->own_usb_ctx && dev->ctx->open_devices == NULL) {
     /* Since this is our first device, we need to spawn the event handler thread */
+    dev->ctx->kill_handler_thread = 0;
     uvc_start_handler_thread(dev->ctx);
   }
 
